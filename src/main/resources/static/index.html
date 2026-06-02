@@ -1,0 +1,580 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Task Manager</title>
+    <style>
+        :root {
+            --bg: #f6f7f9;
+            --surface: #ffffff;
+            --surface-soft: #f0f4f8;
+            --text: #1f2933;
+            --muted: #617182;
+            --border: #d7dee7;
+            --primary: #176b87;
+            --primary-hover: #13586f;
+            --accent: #c2410c;
+            --success: #0f766e;
+            --shadow: 0 10px 30px rgba(31, 41, 51, 0.08);
+        }
+
+        * {
+            box-sizing: border-box;
+        }
+
+        body {
+            margin: 0;
+            min-height: 100vh;
+            background: var(--bg);
+            color: var(--text);
+            font-family: Arial, Helvetica, sans-serif;
+            line-height: 1.5;
+        }
+
+        header {
+            background: var(--surface);
+            border-bottom: 1px solid var(--border);
+            padding: 24px clamp(16px, 5vw, 56px);
+        }
+
+        h1,
+        h2,
+        h3 {
+            margin: 0;
+            letter-spacing: 0;
+        }
+
+        h1 {
+            font-size: clamp(28px, 4vw, 42px);
+        }
+
+        h2 {
+            font-size: 22px;
+        }
+
+        h3 {
+            font-size: 18px;
+        }
+
+        main {
+            width: min(1180px, calc(100% - 32px));
+            margin: 28px auto 48px;
+            display: grid;
+            gap: 24px;
+        }
+
+        .grid {
+            display: grid;
+            grid-template-columns: minmax(280px, 390px) 1fr;
+            gap: 24px;
+            align-items: start;
+        }
+
+        .panel,
+        .suggestion {
+            background: var(--surface);
+            border: 1px solid var(--border);
+            border-radius: 8px;
+            box-shadow: var(--shadow);
+        }
+
+        .panel {
+            padding: 22px;
+        }
+
+        .panel-header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 16px;
+            margin-bottom: 18px;
+        }
+
+        form {
+            display: grid;
+            gap: 14px;
+        }
+
+        label {
+            display: grid;
+            gap: 6px;
+            color: var(--muted);
+            font-size: 13px;
+            font-weight: 700;
+            text-transform: uppercase;
+        }
+
+        input,
+        textarea,
+        select {
+            width: 100%;
+            min-height: 42px;
+            border: 1px solid var(--border);
+            border-radius: 6px;
+            background: #ffffff;
+            color: var(--text);
+            font: inherit;
+            padding: 10px 12px;
+        }
+
+        textarea {
+            min-height: 92px;
+            resize: vertical;
+        }
+
+        input:focus,
+        textarea:focus,
+        select:focus {
+            border-color: var(--primary);
+            outline: 3px solid rgba(23, 107, 135, 0.14);
+        }
+
+        button {
+            min-height: 42px;
+            border: 0;
+            border-radius: 6px;
+            background: var(--primary);
+            color: white;
+            cursor: pointer;
+            font: inherit;
+            font-weight: 700;
+            padding: 10px 16px;
+        }
+
+        button:hover {
+            background: var(--primary-hover);
+        }
+
+        button.secondary {
+            background: var(--surface-soft);
+            color: var(--text);
+            border: 1px solid var(--border);
+        }
+
+        button.secondary:hover {
+            background: #e5edf5;
+        }
+
+        .button-row {
+            display: flex;
+            gap: 10px;
+            flex-wrap: wrap;
+        }
+
+        .message {
+            min-height: 22px;
+            color: var(--muted);
+            font-size: 14px;
+        }
+
+        .message.error {
+            color: #b91c1c;
+        }
+
+        .message.success {
+            color: var(--success);
+        }
+
+        .table-wrap {
+            overflow-x: auto;
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            min-width: 720px;
+        }
+
+        th,
+        td {
+            border-bottom: 1px solid var(--border);
+            padding: 12px 10px;
+            text-align: left;
+            vertical-align: top;
+        }
+
+        th {
+            color: var(--muted);
+            font-size: 12px;
+            text-transform: uppercase;
+            background: var(--surface-soft);
+        }
+
+        tbody tr:hover {
+            background: #fafcff;
+        }
+
+        .empty {
+            color: var(--muted);
+            padding: 24px 10px;
+            text-align: center;
+        }
+
+        .pill {
+            display: inline-flex;
+            align-items: center;
+            min-height: 24px;
+            border-radius: 999px;
+            padding: 2px 10px;
+            font-size: 12px;
+            font-weight: 700;
+            white-space: nowrap;
+        }
+
+        .priority-low {
+            background: #e0f2fe;
+            color: #075985;
+        }
+
+        .priority-medium {
+            background: #fef3c7;
+            color: #92400e;
+        }
+
+        .priority-high {
+            background: #fee2e2;
+            color: #991b1b;
+        }
+
+        .status-todo {
+            background: #e5e7eb;
+            color: #374151;
+        }
+
+        .status-in-progress {
+            background: #dbeafe;
+            color: #1d4ed8;
+        }
+
+        .status-done {
+            background: #dcfce7;
+            color: #166534;
+        }
+
+        .suggestion {
+            display: none;
+            padding: 20px;
+            border-left: 5px solid var(--accent);
+        }
+
+        .suggestion.visible {
+            display: block;
+        }
+
+        .suggestion-grid {
+            display: grid;
+            grid-template-columns: repeat(2, minmax(0, 1fr));
+            gap: 14px;
+            margin-top: 16px;
+        }
+
+        .suggestion-item {
+            background: var(--surface-soft);
+            border: 1px solid var(--border);
+            border-radius: 6px;
+            padding: 12px;
+        }
+
+        .suggestion-label {
+            color: var(--muted);
+            display: block;
+            font-size: 12px;
+            font-weight: 700;
+            margin-bottom: 4px;
+            text-transform: uppercase;
+        }
+
+        .suggestion-value {
+            overflow-wrap: anywhere;
+        }
+
+        @media (max-width: 860px) {
+            .grid,
+            .suggestion-grid {
+                grid-template-columns: 1fr;
+            }
+
+            main {
+                width: min(100% - 24px, 720px);
+                margin-top: 18px;
+            }
+        }
+    </style>
+</head>
+<body>
+<header>
+    <h1>Task Manager</h1>
+</header>
+
+<main>
+    <section class="grid">
+        <div class="panel">
+            <div class="panel-header">
+                <h2>Create Task</h2>
+            </div>
+            <form id="task-form">
+                <label>
+                    Title
+                    <input id="title" name="title" type="text" required maxlength="180">
+                </label>
+                <label>
+                    Description
+                    <textarea id="description" name="description" maxlength="600"></textarea>
+                </label>
+                <label>
+                    Due date
+                    <input id="dueDate" name="dueDate" type="date">
+                </label>
+                <label>
+                    Priority
+                    <select id="priority" name="priority">
+                        <option value="">MEDIUM</option>
+                        <option value="LOW">LOW</option>
+                        <option value="MEDIUM">MEDIUM</option>
+                        <option value="HIGH">HIGH</option>
+                    </select>
+                </label>
+                <button type="submit">Create</button>
+                <div id="create-message" class="message" role="status"></div>
+            </form>
+        </div>
+
+        <div class="panel">
+            <div class="panel-header">
+                <h2>Current Tasks</h2>
+                <button id="refresh-button" class="secondary" type="button">Refresh</button>
+            </div>
+            <div class="table-wrap">
+                <table>
+                    <thead>
+                    <tr>
+                        <th>Title</th>
+                        <th>Description</th>
+                        <th>Due</th>
+                        <th>Priority</th>
+                        <th>Status</th>
+                    </tr>
+                    </thead>
+                    <tbody id="task-table-body">
+                    <tr>
+                        <td class="empty" colspan="5">Loading tasks...</td>
+                    </tr>
+                    </tbody>
+                </table>
+            </div>
+            <div id="list-message" class="message" role="status"></div>
+        </div>
+    </section>
+
+    <section class="panel">
+        <div class="panel-header">
+            <h2>AI Suggestion</h2>
+        </div>
+        <form id="suggest-form">
+            <label>
+                Plain-language task
+                <input id="suggestion-input" type="text" required
+                       placeholder="remind me to submit the quarterly report before Friday">
+            </label>
+            <div class="button-row">
+                <button type="submit">Suggest</button>
+                <button id="use-suggestion-button" class="secondary" type="button" disabled>Use Suggestion</button>
+            </div>
+            <div id="suggest-message" class="message" role="status"></div>
+        </form>
+
+        <div id="suggestion-card" class="suggestion" aria-live="polite">
+            <h3 id="suggestion-title">Suggested task</h3>
+            <div class="suggestion-grid">
+                <div class="suggestion-item">
+                    <span class="suggestion-label">Description</span>
+                    <span id="suggestion-description" class="suggestion-value"></span>
+                </div>
+                <div class="suggestion-item">
+                    <span class="suggestion-label">Due date</span>
+                    <span id="suggestion-due-date" class="suggestion-value"></span>
+                </div>
+                <div class="suggestion-item">
+                    <span class="suggestion-label">Priority</span>
+                    <span id="suggestion-priority" class="suggestion-value"></span>
+                </div>
+                <div class="suggestion-item">
+                    <span class="suggestion-label">Status</span>
+                    <span id="suggestion-status" class="suggestion-value"></span>
+                </div>
+            </div>
+        </div>
+    </section>
+</main>
+
+<script>
+    const taskForm = document.querySelector("#task-form");
+    const suggestForm = document.querySelector("#suggest-form");
+    const taskTableBody = document.querySelector("#task-table-body");
+    const createMessage = document.querySelector("#create-message");
+    const listMessage = document.querySelector("#list-message");
+    const suggestMessage = document.querySelector("#suggest-message");
+    const suggestionCard = document.querySelector("#suggestion-card");
+    const useSuggestionButton = document.querySelector("#use-suggestion-button");
+
+    let currentSuggestion = null;
+
+    function setMessage(element, text, type = "") {
+        element.textContent = text;
+        element.className = `message ${type}`.trim();
+    }
+
+    function formatValue(value) {
+        return value || "None";
+    }
+
+    function createPill(value, type) {
+        const normalized = String(value || "").toLowerCase().replaceAll("_", "-");
+        const element = document.createElement("span");
+        element.className = `pill ${type}-${normalized}`;
+        element.textContent = value || "None";
+        return element;
+    }
+
+    async function readJsonResponse(response) {
+        const text = await response.text();
+        if (!text) {
+            return null;
+        }
+
+        try {
+            return JSON.parse(text);
+        } catch {
+            return {message: text};
+        }
+    }
+
+    async function apiRequest(url, options = {}) {
+        const response = await fetch(url, options);
+        const body = await readJsonResponse(response);
+
+        if (!response.ok) {
+            throw new Error(body?.message || `Request failed with status ${response.status}`);
+        }
+
+        return body;
+    }
+
+    async function loadTasks() {
+        setMessage(listMessage, "");
+        taskTableBody.innerHTML = `<tr><td class="empty" colspan="5">Loading tasks...</td></tr>`;
+
+        try {
+            const tasks = await apiRequest("/tasks");
+
+            if (!tasks.length) {
+                taskTableBody.innerHTML = `<tr><td class="empty" colspan="5">No tasks yet.</td></tr>`;
+                return;
+            }
+
+            taskTableBody.innerHTML = "";
+            tasks.forEach(task => {
+                const row = document.createElement("tr");
+                const title = document.createElement("td");
+                const description = document.createElement("td");
+                const dueDate = document.createElement("td");
+                const priority = document.createElement("td");
+                const status = document.createElement("td");
+
+                title.textContent = formatValue(task.title);
+                description.textContent = formatValue(task.description);
+                dueDate.textContent = formatValue(task.dueDate);
+                priority.appendChild(createPill(task.priority, "priority"));
+                status.appendChild(createPill(task.status, "status"));
+
+                row.append(title, description, dueDate, priority, status);
+                taskTableBody.appendChild(row);
+            });
+        } catch (error) {
+            taskTableBody.innerHTML = `<tr><td class="empty" colspan="5">Could not load tasks.</td></tr>`;
+            setMessage(listMessage, error.message, "error");
+        }
+    }
+
+    taskForm.addEventListener("submit", async event => {
+        event.preventDefault();
+        setMessage(createMessage, "Creating task...");
+
+        const formData = new FormData(taskForm);
+        const task = {
+            title: formData.get("title"),
+            description: formData.get("description") || null,
+            dueDate: formData.get("dueDate") || null,
+            priority: formData.get("priority") || null
+        };
+
+        try {
+            await apiRequest("/tasks", {
+                method: "POST",
+                headers: {"Content-Type": "application/json"},
+                body: JSON.stringify(task)
+            });
+
+            taskForm.reset();
+            setMessage(createMessage, "Task created.", "success");
+            await loadTasks();
+        } catch (error) {
+            setMessage(createMessage, error.message, "error");
+        }
+    });
+
+    suggestForm.addEventListener("submit", async event => {
+        event.preventDefault();
+        const input = document.querySelector("#suggestion-input");
+        const prompt = input.value.trim();
+
+        if (!prompt) {
+            setMessage(suggestMessage, "Enter a task idea first.", "error");
+            return;
+        }
+
+        setMessage(suggestMessage, "Generating suggestion...");
+        suggestionCard.classList.remove("visible");
+        useSuggestionButton.disabled = true;
+        currentSuggestion = null;
+
+        try {
+            const suggestion = await apiRequest("/tasks/suggest", {
+                method: "POST",
+                headers: {"Content-Type": "text/plain"},
+                body: prompt
+            });
+
+            currentSuggestion = suggestion;
+            document.querySelector("#suggestion-title").textContent = suggestion.title || "Suggested task";
+            document.querySelector("#suggestion-description").textContent = formatValue(suggestion.description);
+            document.querySelector("#suggestion-due-date").textContent = formatValue(suggestion.dueDate);
+            document.querySelector("#suggestion-priority").replaceChildren(createPill(suggestion.priority, "priority"));
+            document.querySelector("#suggestion-status").replaceChildren(createPill(suggestion.status, "status"));
+            suggestionCard.classList.add("visible");
+            useSuggestionButton.disabled = false;
+            setMessage(suggestMessage, "Suggestion ready.", "success");
+        } catch (error) {
+            setMessage(suggestMessage, error.message, "error");
+        }
+    });
+
+    useSuggestionButton.addEventListener("click", () => {
+        if (!currentSuggestion) {
+            return;
+        }
+
+        document.querySelector("#title").value = currentSuggestion.title || "";
+        document.querySelector("#description").value = currentSuggestion.description || "";
+        document.querySelector("#dueDate").value = currentSuggestion.dueDate || "";
+        document.querySelector("#priority").value = currentSuggestion.priority || "";
+        setMessage(createMessage, "Suggestion copied into the create form.", "success");
+    });
+
+    document.querySelector("#refresh-button").addEventListener("click", loadTasks);
+
+    loadTasks();
+</script>
+</body>
+</html>
